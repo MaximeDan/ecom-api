@@ -9,6 +9,8 @@ import {
   Res,
   HttpStatus,
   HttpCode,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -20,6 +22,7 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe())
   async create(@Body() createOrderDto: CreateOrderDto, @Res() res: Response) {
     try {
       const createdOrder = await this.ordersService.create(createOrderDto);

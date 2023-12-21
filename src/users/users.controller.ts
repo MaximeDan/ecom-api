@@ -9,6 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   Res,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -20,6 +22,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe())
   async create(@Body() createUserDto: CreateUserDto, @Res() res: Response) {
     try {
       const createdUser = await this.usersService.create(createUserDto);

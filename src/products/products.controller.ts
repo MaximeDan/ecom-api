@@ -9,6 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   Res,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -20,6 +22,7 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
+  @UsePipes(new ValidationPipe())
   async create(
     @Body() createProductDto: CreateProductDto,
     @Res() res: Response,
