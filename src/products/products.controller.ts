@@ -22,7 +22,7 @@ import { Role } from 'src/authentication/role.decorator';
 
 @Controller('products')
 @UseGuards(AuthenticationGuard)
-@Role(['admin'])
+@Role(['admin', 'moderator'])
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
