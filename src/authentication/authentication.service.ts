@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { SignInDto } from './dto/authentication.dto';
@@ -48,6 +49,22 @@ export class AuthService {
       return createdUser;
     } catch (error) {
       throw new InternalServerErrorException('Error creating user');
+    }
+  }
+
+  async authenticateUser(token: string): Promise<any> {
+    try {
+      const decodedToken: any = jwt.verify(token, process.env.JWT_SECRET);
+
+      const user = await this.usersService.findByEmail(decodedToken.user.email);
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      return user;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
     }
   }
 }

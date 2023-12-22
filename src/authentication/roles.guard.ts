@@ -6,12 +6,16 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Roles } from './role.decorator';
+import { AuthService } from './authentication.service';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly authService: AuthService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const roles = this.reflector.getAllAndMerge(Roles, [
       context.getHandler(),
       context.getClass(),
@@ -22,23 +26,37 @@ export class RoleGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const userRoles = request.user?.roles;
+    const authorizationHeader = request.headers['authorization'];
 
-    if (!userRoles) {
-      throw new UnauthorizedException(
-        'User roles are not defined for this route.',
-      );
+    if (!authorizationHeader) {
+      throw new UnauthorizedException('Authorization header not found');
     }
 
-    // Check if the user has at least one required role
-    const hasRequiredRole = roles.some((role) => userRoles.includes(role));
+    const token = authorizationHeader.split(' ')[1];
+    console.log(token);
 
-    if (!hasRequiredRole) {
-      throw new UnauthorizedException(
-        'You do not have the required roles for this route.',
+    try {
+      request.user = await this.authService.authenticateUser(token);
+
+      if (!request.user.roles) {
+        throw new UnauthorizedException(
+          'User roles are not defined for this route.',
+        );
+      }
+
+      const hasRequiredRole = roles.some((role) =>
+        request.user.roles.includes(role),
       );
-    }
 
-    return hasRequiredRole;
+      if (!hasRequiredRole) {
+        throw new UnauthorizedException(
+          'You do not have the required roles for this route.',
+        );
+      }
+
+      return hasRequiredRole;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
   }
 }
