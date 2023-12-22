@@ -13,6 +13,7 @@ datasource db {
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
+  roles     String[] @default(["user"])
   name      String?
   password  String
   createdAt DateTime @default(now())
@@ -21,19 +22,36 @@ model User {
 }
 
 model Order {
-  id        Int       @id @default(autoincrement())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id        Int         @id @default(autoincrement())
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
   userId    Int
-  user      User      @relation(fields: [userId], references: [id])
+  user      User        @relation(fields: [userId], references: [id])
   products  Product[]
+  OrderItem OrderItem[]
 }
 
-model Product {
-  id        Int      @id @default(autoincrement())
-  name      String
-  price     Float
+model OrderItem {
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  orders    Order[]
+
+  @@id([orderId, productId])
+}
+
+
+model Product {
+  id           Int         @id @default(autoincrement())
+  name         String
+  availableQty Int         @default(0)
+  price        Int
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  orderItems   OrderItem[]
+  Order        Order?      @relation(fields: [orderId], references: [id])
+  orderId      Int?
 }

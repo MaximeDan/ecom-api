@@ -11,18 +11,26 @@ import {
   HttpCode,
   UsePipes,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { Response } from 'express';
+import { AuthenticationGuard } from 'src/authentication/authentication.guard';
+import { Role } from 'src/authentication/role.decorator';
+import { RoleGuard } from 'src/authentication/roles.guard';
 
 @Controller('orders')
+@UseGuards(AuthenticationGuard)
+@UseGuards(RoleGuard)
+@Role(['admin'])
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
   @UsePipes(new ValidationPipe())
+  @Role(['user'])
   async create(@Body() createOrderDto: CreateOrderDto, @Res() res: Response) {
     try {
       const createdOrder = await this.ordersService.create(createOrderDto);
@@ -35,9 +43,9 @@ export class OrdersController {
   }
 
   @Get()
-  findAll(@Res() res: Response) {
+  async findAll(@Res() res: Response) {
     try {
-      const orders = this.ordersService.findAll();
+      const orders = await this.ordersService.findAll();
       res.status(HttpStatus.OK).json(orders);
     } catch (error) {
       res

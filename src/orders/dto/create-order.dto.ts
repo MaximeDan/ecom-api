@@ -6,5 +6,5 @@ export class CreateOrderDto {
 
   @IsArray()
   @ArrayMinSize(1)
-  productIds: number[];
+  productQuantities: { productId: number; quantity: number }[];
 }

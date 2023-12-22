@@ -11,13 +11,19 @@ import {
   Res,
   UsePipes,
   ValidationPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Response } from 'express';
+import { AuthenticationGuard } from 'src/authentication/authentication.guard';
+import { Role } from 'src/authentication/role.decorator';
+import { RoleGuard } from 'src/authentication/roles.guard';
 
 @Controller('users')
+@UseGuards(AuthenticationGuard, RoleGuard)
+@Role(['admin'])
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

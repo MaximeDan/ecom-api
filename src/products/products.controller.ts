@@ -11,13 +11,18 @@ import {
   Res,
   ValidationPipe,
   UsePipes,
+  UseGuards,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Response } from 'express';
+import { AuthenticationGuard } from 'src/authentication/authentication.guard';
+import { Role } from 'src/authentication/role.decorator';
 
 @Controller('products')
+@UseGuards(AuthenticationGuard)
+@Role(['admin'])
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
@@ -39,6 +44,7 @@ export class ProductsController {
   }
 
   @Get()
+  @Role(['user'])
   async findAll(@Res() res: Response) {
     try {
       const products = await this.productsService.findAll();

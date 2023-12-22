@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import prisma from '../utils/database';
@@ -7,20 +11,25 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
   async create(createUserDto: CreateUserDto) {
-    const { email, name, password } = createUserDto;
+    try {
+      const { email, name, password } = createUserDto;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Use Prisma to create a new user in the database
-    const createdUser = await prisma.user.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-      },
-    });
+      const createdUser = await prisma.user.create({
+        data: {
+          email,
+          name,
+          password: hashedPassword,
+        },
+      });
 
-    return createdUser;
+      return createdUser;
+    } catch (error) {
+      console.error('Error creating user:', error);
+
+      throw new Error('Error creating user');
+    }
   }
 
   async findAll() {
@@ -38,6 +47,14 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
+
+    return user;
+  }
+
+  async findByEmail(email: string) {
+    const user = await prisma.user.findUnique({
+      where: { email: email },
+    });
 
     return user;
   }
@@ -67,5 +84,15 @@ export class UsersService {
     }
 
     return deletedUser;
+  }
+
+  async validatePassword(user: any, password: string): Promise<boolean> {
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    return isPasswordValid;
   }
 }
