@@ -5,23 +5,35 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Role } from './role.decorator';
+import { Roles } from './role.decorator';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRole = this.reflector.get(Role, context.getHandler());
+    const roles = this.reflector.getAllAndMerge(Roles, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
-    if (!requiredRole) {
-      throw new UnauthorizedException('Role not defined for this route');
+    if (!roles) {
+      // No roles defined for this route, allow access
+      return true;
     }
 
     const request = context.switchToHttp().getRequest();
-    const userRole = request.user.role;
+    const userRoles = request.user.roles;
+    console.log(userRoles);
+    // Check if the user has at least one required role
+    const hasRequiredRole = roles.some((role) => userRoles.includes(role));
 
-    console.log('requiredRole', requiredRole);
-    return userRole === requiredRole;
+    if (!hasRequiredRole) {
+      throw new UnauthorizedException(
+        'You do not have the required roles for this route.',
+      );
+    }
+
+    return hasRequiredRole;
   }
 }

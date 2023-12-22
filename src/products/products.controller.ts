@@ -18,15 +18,17 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Response } from 'express';
 import { AuthenticationGuard } from 'src/authentication/authentication.guard';
-import { Role } from 'src/authentication/role.decorator';
+import { Roles } from 'src/authentication/role.decorator';
+import { RoleGuard } from 'src/authentication/roles.guard';
 
 @Controller('products')
-@UseGuards(AuthenticationGuard)
-@Role(['admin', 'moderator'])
+@UseGuards(RoleGuard)
+@Roles(['admin', 'moderator'])
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
+  @UseGuards(AuthenticationGuard)
   @UsePipes(new ValidationPipe())
   async create(
     @Body() createProductDto: CreateProductDto,
@@ -44,7 +46,7 @@ export class ProductsController {
   }
 
   @Get()
-  @Role(['user'])
+  @Roles(['user'])
   async findAll(@Res() res: Response) {
     try {
       const products = await this.productsService.findAll();
@@ -69,6 +71,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthenticationGuard)
   async update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
@@ -88,6 +91,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthenticationGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {

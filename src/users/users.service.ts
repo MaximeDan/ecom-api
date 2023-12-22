@@ -12,7 +12,7 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   async create(createUserDto: CreateUserDto) {
     try {
-      const { email, name, password } = createUserDto;
+      const { email, name, password, roles } = createUserDto;
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -21,6 +21,7 @@ export class UsersService {
           email,
           name,
           password: hashedPassword,
+          roles: roles || ['user'],
         },
       });
 
@@ -33,13 +34,11 @@ export class UsersService {
   }
 
   async findAll() {
-    // Use Prisma to retrieve all users from the database
     const users = await prisma.user.findMany();
     return users;
   }
 
   async findOne(id: number) {
-    // Use Prisma to retrieve a user by ID from the database
     const user = await prisma.user.findUnique({
       where: { id },
     });
@@ -60,10 +59,12 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    // Use Prisma to update a user in the database
     const updatedUser = await prisma.user.update({
       where: { id },
-      data: updateUserDto,
+      data: {
+        ...updateUserDto,
+        roles: updateUserDto.roles || ['user'],
+      },
     });
 
     if (!updatedUser) {
@@ -74,7 +75,6 @@ export class UsersService {
   }
 
   async remove(id: number) {
-    // Use Prisma to delete a user from the database
     const deletedUser = await prisma.user.delete({
       where: { id },
     });
@@ -88,7 +88,6 @@ export class UsersService {
 
   async validatePassword(user: any, password: string): Promise<boolean> {
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
