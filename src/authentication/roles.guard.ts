@@ -18,13 +18,18 @@ export class RoleGuard implements CanActivate {
     ]);
 
     if (!roles) {
-      // No roles defined for this route, allow access
       return true;
     }
 
     const request = context.switchToHttp().getRequest();
-    const userRoles = request.user.roles;
-    console.log(userRoles);
+    const userRoles = request.user?.roles;
+
+    if (!userRoles) {
+      throw new UnauthorizedException(
+        'User roles are not defined for this route.',
+      );
+    }
+
     // Check if the user has at least one required role
     const hasRequiredRole = roles.some((role) => userRoles.includes(role));
 
